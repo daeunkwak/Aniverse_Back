@@ -109,7 +109,8 @@ async function selectAdoptList(status) {
         const selectAdoptListQuery = `
             select AdoptList.animalImage, 
                    AdoptList.animalSpecies, 
-                   AdoptList.animalAge
+                   AdoptList.animalAge,
+                   AdoptList.adoptListIdx
             from AdoptList
         `;
         selectAdoptListParams = [status];
@@ -193,33 +194,6 @@ async function selectAdoptListIdx(animalIdx) {
 }
 
 
-
-// 4. 입양신청 등록 API adoptListIdx먼저 삽입하기
-// async function insertAdoptListIdx(adoptListIdx) {
-//     try{
-//         const connection = await pool.getConnection(async (conn) => conn);
-//
-//         const insertAdoptListIdxQuery = `
-//             INSERT into AdoptRequest
-//             (adoptListIdx)
-//             value ("?");
-//         `;
-//
-//         const insertAdoptListIdxParams = [adoptListIdx];
-//         const [insertAdoptListIdxRows] = await connection.query(
-//             insertAdoptListIdxQuery,
-//             insertAdoptListIdxParams
-//         );
-//         connection.release();
-//         return insertAdoptListIdxRows;
-//     } catch (err){
-//         logger.error(`insertAdoptListIdx DB Connection error\n: ${err.message}`);
-//         return res.status(500).send(`Error: ${err.message}`);
-//     }
-// }
-
-
-
 // 4. 입양신청 등록 API 토큰필요 ok
 async function insertAdoptRequest(userIdx, adoptListIdx, adoptComment) {
     try{
@@ -244,66 +218,86 @@ async function insertAdoptRequest(userIdx, adoptListIdx, adoptComment) {
     }
 }
 
-// 5. 후기(모니터링)글 업로드1
-// async function insertReview1(adoptRequestIdx, adoptReviewText) {
-//     try{
-//         const connection = await pool.getConnection(async (conn) => conn);
-//         const insertReview1Params = [adoptRequestIdx, adoptReviewText]
-//
-//         const insertReview1Query = `
-//         INSERT into AdoptReview (adoptRequestIdx, adoptReviewText)
-//         value ("?","?");
-//         `;
-//
-//         const [insertReview1Rows] = await connection.query(
-//             insertReview1Query,
-//             insertReview1Params);
-//
-//         connection.release();
-//         return [insertReview1Rows];
-//     } catch (err){
-//         logger.error(`insertReview1 DB Connection error\n: ${err.message}`);
-//         return res.status(500).send(`Error: ${err.message}`);
-//     }
-// }
-//
-//
-// // 5. 후기(모니터링)글 업로드2
-// async function insertReview2(adoptReviewIdx,adoptReviewFile) {
-//     try{
-//         const connection = await pool.getConnection(async (conn) => conn);
-//         const insertReview2Params = [adoptReviewIdx,adoptReviewFile]
-//
-//         const insertReview2Query = `
-//         INSERT into AdoptReviewFile (adoptReviewIdx,adoptReviewFile)
-//         value ("?","?");
-//         `;
-//
-//         const [insertReview2Rows] = await connection.query(
-//             insertReview2Query,
-//             insertReview2Params
-//         );
-//
-//         connection.release();
-//         return [insertReview2Rows];
-//     } catch (err){
-//         logger.error(`insertReview2 DB Connection error\n: ${err.message}`);
-//         return res.status(500).send(`Error: ${err.message}`);
-//     }
-// }
 
+// 5. 후기(모니터링)글 업로드 - 1
+async function insertAdoptReview(adoptRequestIdx, adoptReviewText) {
+    try{
+        const connection = await pool.getConnection(async (conn) => conn);
+        const insertAdoptReviewParams = [adoptRequestIdx, adoptReviewText]
+
+        const insertAdoptReviewQuery = `
+        INSERT into AdoptReview (adoptRequestIdx, adoptReviewText)
+        value ("?","?");
+        `;
+
+        const [insertAdoptReviewRows] = await connection.query(
+            insertAdoptReviewQuery,
+            insertAdoptReviewParams);
+
+        connection.release();
+        return [insertAdoptReviewRows];
+    } catch (err){
+        logger.error(`insertAdoptReview DB Connection error\n: ${err.message}`);
+        return res.status(500).send(`Error: ${err.message}`);
+    }
+}
+
+
+// 5. 후기(모니터링)글 업로드 - 2
+async function selectAdoptReviewIdx(adoptRequestIdx){
+    try{
+        const connection = await pool.getConnection(async (conn) => conn);
+        const selectAdoptReviewIdxParams = [adoptRequestIdx]
+
+        const selectAdoptReviewIdxQuery = `
+            select adoptReviewIdx
+            from AdoptReview ar
+            order by ar.adoptRequestIdx = "?"
+            desc limit 1;
+        `;
+
+        const [selectAdoptReviewIdxRows] = await connection.query(
+            selectAdoptReviewIdxQuery,
+            selectAdoptReviewIdxParams);
+
+        connection.release();
+        return [selectAdoptReviewIdxRows];
+    } catch (err){
+        logger.error(`selectAdoptReviewIdx DB Connection error\n: ${err.message}`);
+        return res.status(500).send(`Error: ${err.message}`);
+    }
+}
+
+// 5. 후기(모니터링)글 업로드 - 3
+async function insertAdoptReviewFile(adoptReviewIdx, filee) {
+    try{
+        const connection = await pool.getConnection(async (conn) => conn);
+        const insertAdoptReviewFileParams = [adoptReviewIdx, filee]
+
+        const insertAdoptReviewFileQuery = `
+        INSERT into AdoptReviewFile (adoptReviewIdx, adoptReviewFile)
+        value ("?","?")
+        `;
+
+        const [insertAdoptReviewFileRows] = await connection.query(
+            insertAdoptReviewFileQuery,
+            insertAdoptReviewFileParams);
+
+        connection.release();
+        return [insertAdoptReviewFileRows];
+    } catch (err){
+        logger.error(`insertAdoptReviewFile DB Connection error\n: ${err.message}`);
+        return res.status(500).send(`Error: ${err.message}`);
+    }
+}
 
 
 module.exports = {
-    // insertAdoptInfo1,
-    // selectCenterIdx,
-    // insertAdoptInfo2,
-    // insertAdoptInfo3,
     selectAdoptList,
     selectAdoptAnimal,
     selectAdoptListIdx,
-    // insertAdoptListIdx
-    insertAdoptRequest
-    // insertReview1,
-    // insertReview2
+    insertAdoptRequest,
+    insertAdoptReview,
+    selectAdoptReviewIdx,
+    insertAdoptReviewFile
 }

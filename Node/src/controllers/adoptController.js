@@ -156,29 +156,51 @@ exports.postAdoptRequest = async function (req, res) {
 
 /**
  * Adopt 5. 입양 모니터링 작성 API ok?
- * [POST] /adopt/review'
+ * [POST] /adopt/review
  */
-// 변수개수 유동적으로 받는 함수 필요할듯
-// exports.postReview = async function (req, res) {
-//     const {adoptRequestIdx, } = req.body;
-//     try{
-//         var adoptListIdxRows = await adoptModel.selectAdoptListIdx(animalIdx);
-//         console.log(adoptListIdxRows[0].adoptListIdx);
-//         var adoptListIdx = adoptListIdxRows[0].adoptListIdx;
-//         // const postAdoptListIdx = await adoptModel.insertAdoptListIdx(adoptListIdx);
-//         const postAdoptInfo = await adoptModel.insertAdoptRequestInfo(
-//             adoptListIdx, userIdx, contactName, contactPhoneNum, adoptComment
-//         );
-//
-//         res.json({
-//             isSuccess: true
-//         });
-//
-//     } catch (err){
-//         logger.error(`postAdoptUserInfo DB Connection error\n: ${err.message}`);
-//         return res.status(500).send(`Error: ${err.message}`);
-//     }
-// };
+// 변수개수를 동적으로 받자
+// 1. 리뷰글작성 -> 리뷰글 인덱스 생성
+// 2. 인덱스 뽑아오기
+// 3. 뽑아온 리뷰글에 파일 추가
+
+// 파일을 추가할 때 리뷰글 인덱스를 쓰지말고 request를 사용??
+exports.postReview = async function (req, res) {
+    const {adoptRequestIdx, adoptReviewText,
+        adoptReviewFile1, adoptReviewFile2, adoptReviewFile3, adoptReviewFile4, adoptReviewFile5} = req.body;
+
+    var fileArrayCheck = [adoptReviewFile1, adoptReviewFile2, adoptReviewFile3, adoptReviewFile4, adoptReviewFile5];
+    var fileArray = [];
+
+    for (let i = 0; i < 5; i++){
+        if (fileArrayCheck[i] != null){
+            fileArray.push(fileArrayCheck[i]);
+        }
+    }
+    var fileArrayLength = fileArray.length;
+
+    try{
+        // 1. 입양 모니터링글 작성
+        const resultRows = adoptModel.insertAdoptReview(adoptRequestIdx, adoptReviewText);
+        // 2. 작성한 모니터링글 인덱스 가져오기
+        const adoptReviewIdx = adoptModel.selectAdoptReviewIdx(adoptRequestIdx);
+        // 3. 해당 글에 파일들 첨부
+        for (let i = 0; i < fileArrayLength; i++){
+            console.log(fileArray[i]);
+            const resultFileRows = adoptModel.insertAdoptReviewFile(adoptReviewIdx, fileArray[i]);
+        }
+
+        res.json({
+            isSuccess: true,
+            fileArray
+        });
+
+    } catch (err){
+        logger.error(`postReview DB Connection error\n: ${err.message}`);
+        return res.status(500).send(`Error: ${err.message}`);
+    }
+};
+
+
 
 
 /**
