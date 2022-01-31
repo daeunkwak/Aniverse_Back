@@ -2,103 +2,34 @@ const { pool } = require("../../../config/database");
 const {logger} = require('../../../config/winston');
 
 
-// 입양 동물정보 업로드 API
-// async function insertAdoptInfo1(centerName, centerAddress, centerPhoneNum) {
-//     try{
-//         const connection = await pool.getConnection(async (conn) => conn);
-//
-//         const insertAdoptInfo1Query = `
-//         INSERT into Center(centerName, centerAddress, centerPhoneNum)
-//         value ("?","?","?");
-//           `;
-//         const  insertAdoptInfo1Params = [centerName, centerAddress, centerPhoneNum]
-//         const [insertAdoptInfoRows1] = await connection.query(
-//             insertAdoptInfo1Query,
-//             insertAdoptInfo1Params
-//         );
-//
-//         connection.release();
-//         return insertAdoptInfoRows1;
-//     } catch (err){
-//         logger.error(`insertAdoptInfo1 DB Connection error\n: ${err.message}`);
-//         return res.status(500).send(`Error: ${err.message}`);
-//     }
-// }
+// 1. 입양 동물 업로드 API
+async function insertAdoptInfo(animalImage, animalGender, animalSpecies, animalAge,
+                               animalVaccinated, animalDisease, animalFind, animalIntro,
+                               adoptEnd, adoptCondition, animalWeight) {
+    try{
+        const connection = await pool.getConnection(async (conn) => conn);
 
-// async function selectCenterIdx(centerName){
-//     try{
-//         const connection = await pool.getConnection(async (conn) => conn);
-//
-//         const selectCenterQuery = `
-//             SELECT Center.centerIdx
-//             FROM Center
-//             WHERE Center.centerName = ?;
-//         `;
-//
-//         const  selectCenterParams = [centerName];
-//         const [selectCenterRows] = await connection.query(
-//             selectCenterQuery,
-//             selectCenterParams
-//         );
-//
-//         connection.release();
-//         return selectCenterRows;
-//     } catch (err){
-//         logger.error(`selectCenter DB Connection error\n: ${err.message}`);
-//         return res.status(500).send(`Error: ${err.message}`);
-//     }
-// }
+        const insertAdoptInfoQuery = `
+        INSERT into AdoptList(animalImage, animalGender, animalSpecies, animalAge,
+                              animalVaccinated, animalDisease, animalFind, animalIntro,
+                              adoptEnd, adoptCondition, animalWeight)
+        value (?, ?,?,?,?,?,?,?,?,?,?);
+          `;
+        const  insertAdoptInfoParams = [animalImage, animalGender, animalSpecies, animalAge,
+            animalVaccinated, animalDisease, animalFind, animalIntro,
+            adoptEnd, adoptCondition, animalWeight]
+        const [insertAdoptInfoRows] = await connection.query(
+            insertAdoptInfoQuery,
+            insertAdoptInfoParams
+        );
 
-//
-// // 입양 동물정보 업로드 API
-// async function insertAdoptInfo2(centerIdx, animalSpecies, animalGender, animalAge, animalVaccinated, animalDiseases, animalFind, animalIntro, animalImage) {
-//     try{
-//         const connection = await pool.getConnection(async (conn) => conn);
-//
-//         const insertAdoptInfo2Query = `
-//         INSERT into Animal (centerIdx, animalSpecies, animalGender, animalAge, animalVaccinated, animalDiseases, animalFind, animalIntro, animalImage)
-//         value ("?","?","?","?","?","?","?", "?", "?");
-//         `;
-//
-//         const  insertAdoptInfo2Params = [centerIdx, animalSpecies, animalGender, animalAge, animalVaccinated, animalDiseases, animalFind, animalIntro, animalImage]
-//         const [insertAdoptInfoRows2] = await connection.query(
-//             insertAdoptInfo2Query,
-//             insertAdoptInfo2Params
-//         );
-//
-//         connection.release();
-//         return insertAdoptInfoRows2;
-//     } catch (err){
-//         logger.error(`insertAdoptInfo2 DB Connection error\n: ${err.message}`);
-//         return res.status(500).send(`Error: ${err.message}`);
-//     }
-// }
-//
-//
-// // // 입양 동물정보 업로드 API
-// async function insertAdoptInfo3(animalIdx, userIdx, adoptCondition, adoptEnd) {
-//     try{
-//         const connection = await pool.getConnection(async (conn) => conn);
-//
-//         const insertAdoptInfo3Query = `
-//         INSERT into AdoptList (userIdx, adoptCondition, adoptEnd)
-//         value ("?","?","?");
-//         `;
-//
-//         const  insertAdoptInfo3Params = [userIdx, adoptEtc,AdoptDeadLine]
-//         const [insertAdoptInfoRows3] = await connection.query(
-//             insertAdoptInfo3Query,
-//             insertAdoptInfo3Params
-//         );
-//
-//         connection.release();
-//         return insertAdoptInfoRows3;
-//     } catch (err){
-//         logger.error(`insertAdoptInfo3 DB Connection error\n: ${err.message}`);
-//         return res.status(500).send(`Error: ${err.message}`);
-//     }
-// }
-
+        connection.release();
+        return insertAdoptInfoRows;
+    } catch (err){
+        logger.error(`insertAdoptInfo DB Connection error\n: ${err.message}`);
+        return res.status(500).send(`Error: ${err.message}`);
+    }
+}
 
 
 // 2. 입양중, (임시보호), 입양완료 조회API ok
@@ -293,6 +224,7 @@ async function insertAdoptReviewFile(adoptReviewIdx, filee) {
 
 
 module.exports = {
+    insertAdoptInfo,
     selectAdoptList,
     selectAdoptAnimal,
     selectAdoptListIdx,

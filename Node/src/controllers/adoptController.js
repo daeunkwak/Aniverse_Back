@@ -14,39 +14,34 @@ const {connect} = require("http2");
  * Adopt 1. 입양신청위한 동물 정보 업로드 API
  * [POST] /adopt/animalinfo
  */
-// exports.postAdoptAniamlInfo = async function (req, res) {
-//
-//     try {
-//         const {animalImage, animalSpecies, animalAge, animalWeight, animalGender,
-//                animalVaccinated, animalDisease, animalFind, animalIntro, adoptEnd,
-//                centerName, centerAddress, centerPhoneNum, adoptCondition} = req.body;
-//
-//         const insertAdoptInfoRows1 =
-//             await adoptModel.insertAdoptInfo1(centerName, centerAddress, centerPhoneNum);
-//
-//         const insertAdoptInfoRows2 =
-//             await adoptModel.insertAdoptInfo2(animalSpecies, animalGender, animalAge,
-//                 animalVaccinated, animalDiseases, animalFind, animalIntro, animalImage);
-//
-//         const insertAdoptInfoRows3 =
-//             await adoptModel.insertAdoptInfo3(contactName, contactPhoneNum, adoptComment);
-//
-//         // if (!insertAdoptInfoRows){
-//         //     return res.json({
-//         //         isSuccess : false
-//         //     })
-//         // }
-//
-//         res.json({
-//             isSuccess: true
-//         });
-//
-//     } catch (err){
-//         logger.error(`postAnimalInfo DB Connection error\n: ${err.message}`);
-//         return res.status(500).send(`Error: ${err.message}`);
-//     }
-// };
+exports.postAdoptAniamlInfo = async function (req, res) {
 
+    try {
+        console.time('/adopt/animalinfo');
+
+        const {animalImage, animalGender, animalSpecies, animalAge,
+            animalVaccinated, animalDisease, animalFind, animalIntro,
+            adoptEnd, adoptCondition, animalWeight} = req.body;
+
+        console.log(animalImage, animalGender, animalSpecies, animalAge,
+            animalVaccinated, animalDisease, animalFind, animalIntro,
+            adoptEnd, adoptCondition, animalWeight);
+
+        const insertAdoptInfoRows =
+            await adoptModel.insertAdoptInfo(animalImage, animalGender, animalSpecies, animalAge,
+                animalVaccinated, animalDisease, animalFind, animalIntro,
+                adoptEnd, adoptCondition, animalWeight);
+
+        console.timeEnd('/adopt/animalinfo');
+        res.json({
+            isSuccess: true
+        });
+
+    } catch (err){
+        logger.error(`postAnimalInfo DB Connection error\n: ${err.message}`);
+        return res.status(500).send(`Error: ${err.message}`);
+    }
+};
 
 
 /**
@@ -70,10 +65,6 @@ exports.getAdoptList = async function (req, res) {
     return res.json({
         isSuccess : true,
         adoptListRows
-        // animalIdx : adoptListRows[0].animalIdx,
-        // animalImage : adoptListRows[0].animalImage,
-        // animalSpecies : adoptListRows[0].animalSpecies,
-        // animalAge : adoptListRows[0].animalAge
     })
 };
 
@@ -85,11 +76,6 @@ exports.getImgClick = async function (req, res) {
     console.time('/adopt/getImgClick');
     const { adoptListIdx } = req.body;
     try{
-        // const {animalIdx, adoptListFile, animalSpecies, animalAge} = req.body;
-
-        // const CommentListResult = await adoptModel.selectAdoptAnimal(
-        //     animalIdx, adoptListFile, animalSpecies, animalAge
-        // );
         const AdoptListResult = await adoptModel.selectAdoptAnimal(adoptListIdx);
 
         if (!AdoptListResult){
@@ -102,22 +88,6 @@ exports.getImgClick = async function (req, res) {
         return res.json({
             isSuccess: true,
             AdoptListResult
-            // animalIdx : AdoptListResult[0].animalIdx,
-            // centerIdx : AdoptListResult[0].centerIdx,
-            // animalSpecies : AdoptListResult[0].animalSpecies,
-            // animalName : AdoptListResult[0].animalName,
-            // animalAge : AdoptListResult[0].animalAge,
-            // animalGender : AdoptListResult[0].animalGender,
-            // animalWeight : AdoptListResult[0].animalWeight,
-            // animalNeutralization : AdoptListResult[0].animalNeutralization,
-            // animalVaccinated : AdoptListResult[0].animalVaccinated,
-            // animalDiseases : AdoptListResult[0].animalDiseases,
-            // animalFind : AdoptListResult[0].animalFind,
-            // animalIntro : AdoptListResult[0].animalIntro,
-            // createdAt : AdoptListResult[0].createdAt,
-            // status : AdoptListResult[0].status,
-            // updatedAt : AdoptListResult[0].updatedAt,
-            // animalImage : AdoptListResult[0].animalImage
         });
     } catch (err){
         logger.error(`getImgClick DB Connection error\n: ${err.message}`);
@@ -202,7 +172,6 @@ exports.postReview = async function (req, res) {
 
 
 
-
 /**
  * Adopt 6. 입양후기글 조회 API
  * [GET] /adopt/review'
@@ -224,9 +193,10 @@ exports.postReview = async function (req, res) {
 //     return res.json({
 //         isSuccess : true,
 //         adoptListRows
-//         // animalIdx : adoptListRows[0].animalIdx,
-//         // animalImage : adoptListRows[0].animalImage,
-//         // animalSpecies : adoptListRows[0].animalSpecies,
-//         // animalAge : adoptListRows[0].animalAge
 //     })
 // };
+
+
+
+
+
