@@ -4,10 +4,12 @@ const jwtMiddleware = require("../../../config/jwtMiddleware");
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const secret_config = require('../../../config/secret');
+const fs = require('fs');
 
 const adoptModel = require('../models/adoptModel');
 const { constants } = require('buffer');
 const {connect} = require("http2");
+
 
 
 /**
@@ -22,7 +24,6 @@ exports.postAdoptAniamlInfo = async function (req, res) {
         const {animalImage, animalGender, animalSpecies, animalAge,
             animalVaccinated, animalDisease, animalFind, animalIntro,
             adoptEnd, adoptCondition, animalWeight} = req.body;
-
         console.log(animalImage, animalGender, animalSpecies, animalAge,
             animalVaccinated, animalDisease, animalFind, animalIntro,
             adoptEnd, adoptCondition, animalWeight);
@@ -42,6 +43,79 @@ exports.postAdoptAniamlInfo = async function (req, res) {
         return res.status(500).send(`Error: ${err.message}`);
     }
 };
+
+
+/**
+ * Adopt 1.2 사진 업로드 test API
+ * [POST] /adopt/imagetest
+ */
+exports.postImage = async function (req, res) {
+
+    try {
+        console.time('/adopt/imagetestt');
+
+        const {animalImage, animalGender, animalSpecies, animalAge,
+            animalVaccinated, animalDisease, animalFind, animalIntro,
+            adoptEnd, adoptCondition, animalWeight} = req.body;
+
+        // type check
+        console.log('animalImageType : ', typeof (animalImage)); // string
+
+        // 받아온 64base 형식 문자열
+        console.log('animalImage : ', animalImage);
+        var animalImageString = new String(animalImage); // string -> 필요없는 코드
+
+        // 그냥 js 문법 적용
+        // decodedImage = atob(animalImage);
+        // console.log('decodedImage : ', decodedImage);
+        // console.log('decodedImageType : ', typeof (decodedImage));
+
+        // -> atob is not defined 해결
+        global.Buffer = global.Buffer || require('buffer').Buffer;
+        //
+        // if (typeof atob === 'undefined') {
+        //     global.atob = function (animalImage) {
+        //         return new Buffer(animalImage, 'base64').toString('binary');
+        //     };
+        // }
+
+        resImage = Buffer.from(animalImage, 'base64').toString('binary');
+        console.log('resImage : ', resImage);
+        console.log('resImageType : ', typeof (resImage));
+
+        // paramDecoded = decodeURIComponent(animalImageString);
+        // console.log('paramDecodedType : ', typeof(paramDecoded)); // string
+        // console.log('paramDecoded : ', paramDecoded);
+
+        // var bufwrite = paramDecoded.split('=')[1];
+        // console.log('bufwriteType : ', typeof(bufwrite)); // undefined
+
+        // 문자열을 base64로 디코딩 -> 폴더에 저장
+        // var buf = Buffer.from(bufwrite, 'base64');
+        // console.log('bufType : ', typeof(buf));
+        // console.log(bufwrite);
+        // console.log(buf);
+        fs.writeFileSync("../imagetest.jpg", resImage);
+
+
+        const postImageTestRows =
+            await adoptModel.insertAdoptInfo(resImage, animalGender, animalSpecies, animalAge,
+                animalVaccinated, animalDisease, animalFind, animalIntro,
+                adoptEnd, adoptCondition, animalWeight);
+
+        console.timeEnd('/adopt/imagetestt');
+        res.json({
+            isSuccess: true
+        });
+
+    } catch (err){
+        logger.error(`postImagTeste DB Connection error\n: ${err.message}`);
+        return res.status(500).send(`Error: ${err.message}`);
+    }
+};
+
+
+
 
 
 /**
@@ -195,6 +269,7 @@ exports.postReview = async function (req, res) {
 //         adoptListRows
 //     })
 // };
+
 
 
 
