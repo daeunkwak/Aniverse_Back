@@ -4,7 +4,15 @@ const jwtMiddleware = require("../../../config/jwtMiddleware");
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const secret_config = require('../../../config/secret');
+
 const fs = require('fs');
+const AWS = require('aws-sdk');
+const BUCKET_NAME = 'bucket-54ci7a'
+AWS.config.update({
+    region:         'ap-northeast-2',
+    accessKeyId:    'AKIA5EBOKBSTDY76LWTZ',
+    secretAccessKey:'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'
+})
 
 const adoptModel = require('../models/adoptModel');
 const { constants } = require('buffer');
@@ -50,6 +58,21 @@ exports.postAdoptAniamlInfo = async function (req, res) {
  * [POST] /adopt/imagetest
  */
 exports.postImage = async function (req, res) {
+    function base64_encode(file) {
+        // 바이너리 데이터 읽기 file 에는 파일의 경로를 지정
+        var bitmap = fs.readFileSync(file);
+        //바이너리 데이터를 base64 포멧으로 인코딩하여 스트링 획등
+        return new Buffer(bitmap).toString('base64');
+    }
+
+    // base64포멧의 스트링을 디코딩하여 파일로 쓰는 함수
+    function base64_decode(base64str, file) {
+        // 버퍼 객체를 만든후 첫번째 인자로 base64 스트링, 두번째 인자는 파일 경로를 지정 파일이름만 있으면 프로젝트 root에 생성
+        var bitmap = new Buffer(base64str, 'base64');
+        // 버퍼의 파일을 쓰기
+        fs.writeFileSync(file, bitmap);
+        console.log('******** base64로 인코딩되었던 파일 쓰기 성공 ********');
+    }
 
     try {
         console.time('/adopt/imagetestt');
@@ -61,51 +84,32 @@ exports.postImage = async function (req, res) {
         // type check
         console.log('animalImageType : ', typeof (animalImage)); // string
 
-        // 받아온 64base 형식 문자열
-        console.log('animalImage : ', animalImage);
-        var animalImageString = new String(animalImage); // string -> 필요없는 코드
+        var filename = animalSpecies + animalAge;
+        console.log('filename : ', filename);
+        var filepath = 'filefile/' + filename + '.jpg';
+        console.log('filepath : ', filepath);
+        base64_decode(animalImage, filepath);
 
-        // 그냥 js 문법 적용
-        // decodedImage = atob(animalImage);
-        // console.log('decodedImage : ', decodedImage);
-        // console.log('decodedImageType : ', typeof (decodedImage));
+        const imageStream = fs.createReadStream(filepath);
+        const params = { Bucket:BUCKET_NAME, Key:filename, Body:imageStream, ContentType: 'image' }
+        const upload = new AWS.S3.ManagedUpload({ params });
+        upload.promise()
 
-        // -> atob is not defined 해결
-        global.Buffer = global.Buffer || require('buffer').Buffer;
-        //
-        // if (typeof atob === 'undefined') {
-        //     global.atob = function (animalImage) {
-        //         return new Buffer(animalImage, 'base64').toString('binary');
-        //     };
-        // }
 
-        resImage = Buffer.from(animalImage, 'base64').toString('binary');
-        console.log('resImage : ', resImage);
-        console.log('resImageType : ', typeof (resImage));
-
-        // paramDecoded = decodeURIComponent(animalImageString);
-        // console.log('paramDecodedType : ', typeof(paramDecoded)); // string
-        // console.log('paramDecoded : ', paramDecoded);
-
-        // var bufwrite = paramDecoded.split('=')[1];
-        // console.log('bufwriteType : ', typeof(bufwrite)); // undefined
-
-        // 문자열을 base64로 디코딩 -> 폴더에 저장
-        // var buf = Buffer.from(bufwrite, 'base64');
-        // console.log('bufType : ', typeof(buf));
-        // console.log(bufwrite);
-        // console.log(buf);
-        fs.writeFileSync("../imagetest.jpg", resImage);
-
+        // resImage = Buffer.from(animalImage, 'base64').toString('binary');
+        // console.log('resImage : ', resImage);
+        // console.log('resImageType : ', typeof (resImage));
 
         const postImageTestRows =
-            await adoptModel.insertAdoptInfo(resImage, animalGender, animalSpecies, animalAge,
+            await adoptModel.insertAdoptInfo(filepath, animalGender, animalSpecies, animalAge,
                 animalVaccinated, animalDisease, animalFind, animalIntro,
                 adoptEnd, adoptCondition, animalWeight);
 
         console.timeEnd('/adopt/imagetestt');
         res.json({
             isSuccess: true
+            // animalImage,
+            // resImage
         });
 
     } catch (err){
@@ -115,6 +119,71 @@ exports.postImage = async function (req, res) {
 };
 
 
+/**
+ * Adopt 1.3 사진 업로드 test AWS storage
+ * [POST] /adopt/imagetest/aws
+ */
+// exports.postImageAws = async function (req, res) {
+//
+//     function base64_encode(file) {
+//         // 바이너리 데이터 읽기 file 에는 파일의 경로를 지정
+//         var bitmap = fs.readFileSync(file);
+//         //바이너리 데이터를 base64 포멧으로 인코딩하여 스트링 획등
+//         return new Buffer(bitmap).toString('base64');
+//     }
+//
+//     // base64포멧의 스트링을 디코딩하여 파일로 쓰는 함수
+//     function base64_decode(base64str, file) {
+//         // 버퍼 객체를 만든후 첫번째 인자로 base64 스트링, 두번째 인자는 파일 경로를 지정 파일이름만 있으면 프로젝트 root에 생성
+//         var bitmap = new Buffer(base64str, 'base64');
+//         // 버퍼의 파일을 쓰기
+//         fs.writeFileSync(file, bitmap);
+//         console.log('******** base64로 인코딩되었던 파일 쓰기 성공 ********');
+//     }
+//
+//     try {
+//         console.time('/adopt/imagetestt');
+//
+//         const {animalImage, animalGender, animalSpecies, animalAge,
+//             animalVaccinated, animalDisease, animalFind, animalIntro,
+//             adoptEnd, adoptCondition, animalWeight} = req.body;
+//
+//         // type check
+//         console.log('animalImageType : ', typeof (animalImage)); // string
+//
+//         var filename = animalSpecies + animalAge;
+//         console.log('filename : ', filename);
+//         var filepath = 'filefile/' + filename + '.jpg';
+//         console.log('filepath : ', filepath);
+//         base64_decode(animalImage, filepath);
+//
+//         const imageStream = fs.createReadStream(filepath);
+//         const params = { Bucket:BUCKET_NAME, Key:filename, Body:imageStream, ContentType: 'image' }
+//         const upload = new AWS.S3.ManagedUpload({ params });
+//         upload.promise()
+//
+//
+//         // resImage = Buffer.from(animalImage, 'base64').toString('binary');
+//         // console.log('resImage : ', resImage);
+//         // console.log('resImageType : ', typeof (resImage));
+//
+//         const postImageTestRows =
+//             await adoptModel.insertAdoptInfo(filepath, animalGender, animalSpecies, animalAge,
+//                 animalVaccinated, animalDisease, animalFind, animalIntro,
+//                 adoptEnd, adoptCondition, animalWeight);
+//
+//         console.timeEnd('/adopt/imagetestt');
+//         res.json({
+//             isSuccess: true
+//             // animalImage,
+//             // resImage
+//         });
+//
+//     } catch (err){
+//         logger.error(`postImagTeste DB Connection error\n: ${err.message}`);
+//         return res.status(500).send(`Error: ${err.message}`);
+//     }
+// };
 
 
 
@@ -141,6 +210,139 @@ exports.getAdoptList = async function (req, res) {
         adoptListRows
     })
 };
+
+
+/**
+ * Adopt 2.2 입양중/임보중/입양완료 동물 조회 이미지전달 -> 문자열 리턴
+ * [POST] /adopt/listlist
+ */
+exports.getAdoptListList = async function (req, res) {
+    console.time('/adopt/listlist');
+    const { status } = req.body;
+    console.log(status);
+
+    function base64_encode(file) {
+        // 바이너리 데이터 읽기 file 에는 파일의 경로를 지정
+        var bitmap = fs.readFileSync(file);
+        //바이너리 데이터를 base64 포멧으로 인코딩하여 스트링 획등
+        return new Buffer(bitmap).toString('base64');
+    }
+
+    // 동물 전체 조회
+    const adoptListRows = await adoptModel.selectAdoptListList(status);
+
+    var sizee = adoptListRows.length;
+    for (let i = 0; i < sizee; i++){
+        var filepath = adoptListRows[i].animalImage;
+        var resImage = base64_encode(filepath);
+        adoptListRows[i].animalImage = resImage;
+        console.log('filepath : ', filepath);
+        console.log('resImage : ', resImage);
+    }
+
+    if (!adoptListRows){
+        return res.json({
+            isSuccess : false
+        })
+    }
+
+    console.timeEnd('/adopt/listlist');
+    return res.json({
+        isSuccess : true,
+        adoptListRows
+    })
+};
+
+/**
+ * Adopt 2.3 입양중/임보중/입양완료 동물 조회 이미지전달 -> 이미지파일 리턴
+ * [POST] /adopt/listlist
+ */
+exports.getAdoptListListList = async function (req, res) {
+    console.time('/adopt/listlistlist');
+    const { status } = req.body;
+    console.log(status);
+
+    function base64_encode(file) {
+        // 바이너리 데이터 읽기 file 에는 파일의 경로를 지정
+        var bitmap = fs.readFileSync(file);
+        //바이너리 데이터를 base64 포멧으로 인코딩하여 스트링 획등
+        return new Buffer(bitmap).toString('base64');
+    }
+
+    // 동물 전체 조회
+    const adoptListRows = await adoptModel.selectAdoptListListList(status);
+
+    var sizee = adoptListRows.length;
+    for (let i = 0; i < sizee; i++){
+        var filepath = adoptListRows[i].animalImage;
+        fs.readFile(filepath, function(err, data){
+            res.writeHead(200, {"Content-Type": "image/jpg"});
+            res.write(data);
+            res.end();
+        });
+
+        adoptListRows[i].animalImage = resImage;
+        console.log('filepath : ', filepath);
+        console.log('resImage : ', resImage);
+    }
+
+    if (!adoptListRows){
+        return res.json({
+            isSuccess : false
+        })
+    }
+
+    console.timeEnd('/adopt/listlistlist');
+    return res.json({
+        isSuccess : true,
+        adoptListRows
+    })
+};
+
+
+/**
+ * Adopt 2.4 입양중/임보중/입양완료 aws test
+ * [GET] /adopt/list/aws
+ */
+exports.getAdoptListAws = async function (req, res) {
+    console.time('/adopt/list/aws');
+    const {status} = req.body;
+    console.log(status);
+
+    // 동물 전체 조회
+    const adoptListRows = await adoptModel.selectAdoptList(status);
+
+    var sizee = adoptListRows.length;
+    for (let i = 0; i < sizee; i++) {
+        var checkk = adoptListRows[i].animalImage;
+        if (checkk.charAt(0) == 'h'){
+            continue;
+        }
+        else{
+            var species = adoptListRows[i].animalSpecies;
+            var age = adoptListRows[i].animalAge;
+            var filename = species + age;
+            adoptListRows[i].animalImage = "https://bucket-54ci7a.s3.ap-northeast-2.amazonaws.com/" + filename;
+        }
+    }
+    ;
+
+    if (!adoptListRows) {
+        return res.json({
+            isSuccess: false
+        })
+    }
+
+    console.timeEnd('/adopt/list/aws');
+    return res.json({
+        isSuccess: true,
+        adoptListRows
+    })
+};
+
+
+
+
 
 /**
  * Adopt 3. 사진눌렀을시 정보조회 API ok
