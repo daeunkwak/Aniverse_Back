@@ -8,21 +8,8 @@ async function selectMarket() {
     let connection = await MongoClient.connect(connectionString);
     let db = connection.db('hy')
     try{
-
-        // const connection = await pool.getConnection(async (conn) => conn);
-        // const selectMarketQuery = `
-        //     select p.productIdx,
-        //            p.productImage,
-        //            p.productName
-        //     from Product p;
-        // `;
-        //
-        // const [selectMarketRows] = await connection.query(
-        //     selectMarketQuery
-        // );
         var a = await db.collection('Product').find({},{productIdx:1,productImage:1,productName:1}).toArray()
         console.log(`res => ${JSON.stringify(a)}`);
-
         return a;
     } catch (err){
         logger.error(`selectMarket DB Connection error\n: ${err.message}`);
@@ -37,21 +24,6 @@ async function selectCategory(categoryIdx) {
     let connection = await MongoClient.connect(connectionString);
     let db = connection.db('hy')
     try{
-        // const connection = await pool.getConnection(async (conn) => conn);
-        //
-        // const selectMarketQuery = `
-        //     select p.productIdx,
-        //            p.productImage,
-        //            p.productName
-        //     from Product p left join Category c on p.categoryIdx = c.categoryIdx
-        //     where c.categoryIdx = ?;
-        // `;
-        //
-        // const selectCategoryParams = [categoryIdx];
-        // const [selectCategoryRows] = await connection.query(
-        //     selectMarketQuery,
-        //     selectCategoryParams
-        // );
         var a = await db.collection('Category').find({categoryIdx: categoryIdx},{categoryIdx:1}).toArray()
         productCategoryIdx = a[0].categoryIdx
         var b = await db.collection('Product').find({categoryIdx: productCategoryIdx},{categoryIdx:1, productIdx:1,productImage:1,productName:1 }).toArray()
@@ -73,25 +45,24 @@ async function postProduct1(marketIdx, productName, productIntro, productPrice, 
     let db = connection.db('hy')
     try {
         var a = await db.collection('Product').insertOne({ marketIdx: marketIdx, productName: productName, productIntro: productIntro, productPrice: productPrice, productImage: productImage,productJelly: productJelly, categoryIdx: categoryIdx})
-        // const connection = await pool.getConnection(async (conn) => conn);
-        //
-        // console.log(userIdx, productName, productIntro, productPrice, productImage, categoryIdx);
-        //
-        //
-        //     const insertProductQuery1 = `
-        //         insert into Product (userIdx, productName, productIntro, productPrice, productImage, categoryIdx)
-        //         values (?, ?, ?, ?, ?, ?);
-        //     `;
-        //     const insertProductParams1 = [userIdx, productName, productIntro, productPrice, productImage, categoryIdx];
-        //     const insertProductRow1 =await connection.query(
-        //         insertProductQuery1,
-        //         insertProductParams1
-        //     );
         return a;
     } catch (err) {
         logger.error(`InsertProduct1 DB Connection error\n: ${err.message}`);
     }
     finally {
+        await connection.close();
+    }
+}
+
+// 4. 상품 구매 API ok?
+async function purchaseProduct(userIdx, productIdx, productAmount) {
+    let connection = await MongoClient.connect(connectionString);
+    let db = connection.db('hy')
+    try {
+        await db.collection('PurchaseProduct').insertOne({ userIdx: userIdx, productIdx: productIdx,productAmount: productAmount})
+    }catch (err) {
+        logger.error(`purchaseProduct DB Connection error\n: ${err.message}`);
+    }finally {
         await connection.close();
     }
 }
@@ -128,6 +99,6 @@ async function postProduct1(marketIdx, productName, productIntro, productPrice, 
 module.exports = {
     selectMarket,
     selectCategory,
-    postProduct1
-    // postProduct2
+    postProduct1,
+    purchaseProduct
 }
